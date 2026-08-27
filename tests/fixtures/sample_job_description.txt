@@ -1,0 +1,28 @@
+Senior Backend Engineer — CloudTech Solutions
+
+We are looking for a Senior Backend Engineer to join our platform team.
+You will design, build, and maintain scalable backend services that power
+our cloud-native platform.
+
+Responsibilities:
+- Design and implement high-performance backend services
+- Collaborate with frontend and infrastructure teams
+- Participate in architecture and design reviews
+- Mentor junior engineers
+- Contribute to technical documentation
+
+Requirements:
+- 5+ years of experience in backend development
+- Strong proficiency in Python and/or Go
+- Experience with microservices architecture
+- Familiarity with Kubernetes and Docker
+- Experience with PostgreSQL and Redis
+- Strong understanding of RESTful API design
+- Experience with cloud platforms (AWS or GCP)
+- Excellent communication and mentoring skills
+
+Nice to have:
+- Experience with GraphQL
+- Knowledge of event-driven architecture (Kafka)
+- Contributions to open source projects
+- Experience with machine learning pipelines

@@ -1,0 +1,64 @@
+# ============================================================
+# SkillForge AI — .gitignore
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+ENV/
+
+# --- Environment & Secrets ---
+.env
+.env.local
+.env.production
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Testing ---
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# --- FAISS Indexes ---
+*.faiss
+*.index
+faiss_indexes/
+
+# --- Model Cache ---
+model_cache/
+models_cache/
+
+# --- Streamlit ---
+.streamlit/secrets.toml
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Misc ---
+*.pkl
+*.pickle
+scratch/

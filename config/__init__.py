@@ -1,0 +1,1 @@
+"""SkillForge AI — Configuration package."""
