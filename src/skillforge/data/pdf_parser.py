@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-import fitz  # PyMuPDF
+import pymupdf  # PyMuPDF (formerly 'fitz')
 
 from src.skillforge.utils.exceptions import PDFParsingError
 from src.skillforge.utils.logging import logger
@@ -71,7 +71,7 @@ class PDFParser:
         metadata: dict = {}
 
         try:
-            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+            doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
         except Exception as e:
             logger.error("Failed to open PDF document", error=str(e))
             raise PDFParsingError(
@@ -196,7 +196,7 @@ class PDFParser:
                 "Make sure you're uploading a .pdf file.",
             )
 
-    def _extract_metadata(self, doc: fitz.Document) -> dict:
+    def _extract_metadata(self, doc: pymupdf.Document) -> dict:
         """Extract available metadata from the PDF document."""
         try:
             meta = doc.metadata or {}
