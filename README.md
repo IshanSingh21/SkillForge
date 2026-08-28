@@ -144,7 +144,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 ## 🗺️ Roadmap
 
 - [x] **Milestone 1**: Foundation & Data Layer
-- [ ] **Milestone 2**: AI Core (Embeddings, Vector Store, LLM Abstraction)
+- [x] **Milestone 2**: AI Core (Embeddings, Vector Store, LLM Abstraction)
 - [ ] **Milestone 3**: Skill Extraction & Semantic Matching
 - [ ] **Milestone 4**: RAG Pipeline & Career Assistant
 - [ ] **Milestone 5**: Generation Services (Roadmap & Interview)
