@@ -2,12 +2,12 @@
 SkillForge AI — Resume Processing Service.
 
 Orchestrates the full resume processing pipeline: PDF extraction →
-text cleaning → section detection → text chunking. This is the single
-entry point that the UI calls to process an uploaded resume.
+text cleaning → section detection → skill extraction → text chunking.
+This is the single entry point that the UI calls to process an uploaded resume.
 
 Design decisions:
-    - Dependencies (parser, preprocessor, chunker) are injected via the
-      constructor so each component can be tested independently or swapped.
+    - Dependencies (parser, preprocessor, chunker, skill extractor) are injected
+      via the constructor so each component can be tested independently or swapped.
     - The pipeline is deliberately fail-soft: individual stage failures
       are captured as warnings in the result rather than aborting the
       entire pipeline, so users get partial results when possible.
@@ -27,11 +27,13 @@ from config.settings import get_settings
 from src.skillforge.data.chunker import TextChunker
 from src.skillforge.data.pdf_parser import PDFParser
 from src.skillforge.data.preprocessor import TextPreprocessor
-from src.skillforge.models.resume import ResumeAnalysis, TextChunk
+from src.skillforge.models.resume import ResumeAnalysis, Skill, TextChunk
+from src.skillforge.services.skill_extractor import SkillExtractor
 from src.skillforge.utils.exceptions import (
     ChunkingError,
     PDFParsingError,
     PreprocessingError,
+    SkillExtractionError,
     SkillForgeError,
 )
 from src.skillforge.utils.logging import logger
@@ -45,7 +47,8 @@ class ResumeService:
         1. PDF text extraction (PyMuPDF)
         2. Text cleaning & normalization
         3. Section detection (Experience, Education, Skills, …)
-        4. Text chunking for embedding/retrieval
+        4. Skill extraction (Taxonomy + NLP)
+        5. Text chunking for embedding/retrieval
 
     Each stage feeds into the next. Non-fatal failures at any stage
     produce warnings but do not abort the pipeline.
@@ -56,6 +59,7 @@ class ResumeService:
         pdf_parser: PDFParser | None = None,
         preprocessor: TextPreprocessor | None = None,
         chunker: TextChunker | None = None,
+        skill_extractor: SkillExtractor | None = None,
     ) -> None:
         """
         Initialize with optional dependency injection.
@@ -71,6 +75,7 @@ class ResumeService:
             chunk_size=settings.chunk_size,
             chunk_overlap=settings.chunk_overlap,
         )
+        self.skill_extractor = skill_extractor or SkillExtractor(use_nlp=True)
 
     def process_resume(
         self,
@@ -86,7 +91,7 @@ class ResumeService:
 
         Returns:
             ResumeAnalysis containing raw text, cleaned text, sections,
-            and text chunks ready for embedding.
+            extracted skills, and text chunks ready for embedding.
 
         Raises:
             PDFParsingError: If PDF extraction completely fails.
@@ -133,7 +138,16 @@ class ResumeService:
 
         logger.info("Section detection complete", sections_found=len(sections))
 
-        # ── Stage 4: Text Chunking ─────────────────────────────────
+        # ── Stage 4: Skill Extraction ──────────────────────────────
+        skills: list[Skill] = []
+        try:
+            skills = self.skill_extractor.extract_skills(cleaned_text, source="resume")
+            logger.info("Skill extraction complete", num_skills=len(skills))
+        except Exception as e:
+            logger.warning("Skill extraction in resume pipeline failed", error=str(e))
+            processing_errors.append(f"Skill extraction warning: {e}")
+
+        # ── Stage 5: Text Chunking ─────────────────────────────────
         chunks = self._generate_chunks(
             cleaned_text=cleaned_text,
             sections=sections,
@@ -148,7 +162,7 @@ class ResumeService:
             raw_text=raw_text,
             cleaned_text=cleaned_text,
             sections=sections,
-            skills=[],  # Skills will be extracted in Milestone 3
+            skills=skills,
             chunks=chunks,
             filename=filename,
             page_count=page_count,
@@ -160,6 +174,7 @@ class ResumeService:
             filename=filename,
             pages=page_count,
             sections=len(sections),
+            skills=len(skills),
             chunks=len(chunks),
             words=analysis.word_count,
             warnings=len(processing_errors),
@@ -183,7 +198,7 @@ class ResumeService:
             source_name: Label for the text source.
 
         Returns:
-            ResumeAnalysis with cleaned text, sections, and chunks.
+            ResumeAnalysis with cleaned text, sections, skills, and chunks.
 
         Raises:
             PreprocessingError: If text is empty or cleaning fails.
@@ -199,6 +214,14 @@ class ResumeService:
             sections = []
             processing_errors.append(f"Section detection failed: {e}")
 
+        # Extract skills
+        skills: list[Skill] = []
+        try:
+            skills = self.skill_extractor.extract_skills(cleaned_text, source="resume")
+        except Exception as e:
+            logger.warning("Skill extraction from text failed", error=str(e))
+            processing_errors.append(f"Skill extraction warning: {e}")
+
         chunks = self._generate_chunks(
             cleaned_text=cleaned_text,
             sections=sections,
@@ -210,7 +233,7 @@ class ResumeService:
             raw_text=raw_text,
             cleaned_text=cleaned_text,
             sections=sections,
-            skills=[],
+            skills=skills,
             chunks=chunks,
             filename=source_name,
             page_count=0,
