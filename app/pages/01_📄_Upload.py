@@ -206,7 +206,7 @@ if analysis is not None:
     st.subheader("📋 Processing Results")
 
     # ── Summary Metrics ────────────────────────────────────────
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
         st.metric("📄 Pages", analysis.page_count or "N/A")
@@ -215,6 +215,8 @@ if analysis is not None:
     with col3:
         st.metric("📂 Sections", len(analysis.sections))
     with col4:
+        st.metric("🎯 Skills", len(analysis.skills))
+    with col5:
         st.metric("🧩 Chunks", len(analysis.chunks))
 
     # ── Warnings ───────────────────────────────────────────────
@@ -224,8 +226,8 @@ if analysis is not None:
                 st.warning(warning)
 
     # ── Tabs for detailed output ───────────────────────────────
-    tab_clean, tab_sections, tab_chunks, tab_raw = st.tabs(
-        ["🧹 Cleaned Text", "📂 Sections", "🧩 Chunks", "📄 Raw Text"]
+    tab_clean, tab_skills, tab_sections, tab_chunks, tab_raw = st.tabs(
+        ["🧹 Cleaned Text", "🎯 Extracted Skills", "📂 Sections", "🧩 Chunks", "📄 Raw Text"]
     )
 
     with tab_clean:
@@ -237,6 +239,22 @@ if analysis is not None:
             disabled=True,
             label_visibility="collapsed",
         )
+
+    with tab_skills:
+        if analysis.skills:
+            st.markdown(f"**{len(analysis.skills)} skills extracted from resume:**")
+            # Group by category
+            categories = {}
+            for s in analysis.skills:
+                cat_name = s.category.value.title()
+                categories.setdefault(cat_name, []).append(s)
+
+            for cat_name, skill_list in sorted(categories.items()):
+                st.markdown(f"**{cat_name}** ({len(skill_list)}):")
+                skill_badges = " ".join([f"`{s.name}`" for s in skill_list])
+                st.markdown(skill_badges)
+        else:
+            st.info("No skills detected in the resume text.")
 
     with tab_sections:
         if analysis.sections:
@@ -282,7 +300,6 @@ if analysis is not None:
     # ── Next Steps ─────────────────────────────────────────────
     st.divider()
     st.info(
-        "✅ **Resume processed!** Skill extraction and semantic matching "
-        "will be available in Milestone 3. Navigate to 📊 **Analysis** once available.",
+        "✅ **Resume processed!** Navigate to 📊 **Analysis** in the sidebar to view your detailed match score and skill breakdown.",
         icon="🚀",
     )
