@@ -46,6 +46,12 @@ class ChunkingError(SkillForgeError):
     pass
 
 
+class KnowledgeBaseError(SkillForgeError):
+    """Raised when knowledge base document parsing, loading, or validation fails."""
+
+    pass
+
+
 # ── AI Layer Exceptions ───────────────────────────────────────────────
 
 
