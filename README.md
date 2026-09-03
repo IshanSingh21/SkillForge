@@ -19,10 +19,67 @@ SkillForge AI is a portfolio-grade AI/ML application that uses NLP, sentence-tra
 | 🗄️ FAISS Vector Retrieval | 🟢 M6 | Multi-namespace vector store for Resume, JD, and Knowledge Base |
 | 💬 Grounded RAG Pipeline | 🟢 M7 | Source-grounded conversational assistant with anti-hallucination guardrails |
 | 📌 Source Citations | 🟢 M7 | Every answer cites its source documents and relevance scores |
-| 🗺️ Learning Roadmap | 🔲 M8 | LLM-generated personalized skill development plan |
-| 🎤 Interview Questions | 🔲 M8 | Role-specific, gap-aware interview preparation |
+| 📖 Curated Knowledge Base | 🟢 M8 | Local structured knowledge base across 10 core technical domains |
+| 🗺️ Learning Roadmap | 🔲 M9 | LLM-generated personalized skill development plan |
+| 🎤 Interview Questions | 🔲 M9 | Role-specific, gap-aware interview preparation |
 
 > 🟢 = Implemented · 🔲 = Planned
+
+---
+
+## 📖 Curated Career Knowledge Base (Milestone 8)
+
+SkillForge AI includes a local, curated knowledge base structured across 10 core technology and computer science domains:
+
+| Domain / Topic | Document | Covered Sections |
+|---|---|---|
+| **Machine Learning** | `machine_learning.md` | Supervised/unsupervised theory, Scikit-Learn, evaluation metrics, feature engineering, learning progression |
+| **Deep Learning** | `deep_learning.md` | PyTorch, backpropagation, CNNs, Transformers, loss functions, GPU acceleration, career roles |
+| **Natural Language Processing** | `natural_language_processing.md` | spaCy, tokenization, embeddings, Transformers (BERT/RoBERTa), vector search, project ideas |
+| **Computer Vision** | `computer_vision.md` | OpenCV, YOLO object detection, segmentation (U-Net), Vision Transformers, edge deployment |
+| **SQL & Databases** | `sql_and_databases.md` | CTEs, window functions, schema design, ACID transactions, indexing, query optimization, dbt |
+| **Python Development** | `python_development.md` | OOP, dunder methods, type hinting, `asyncio`, FastAPI microservices, testing with pytest |
+| **MLOps** | `mlops.md` | CI/CD for ML, MLflow tracking, data/concept drift monitoring, model registries, serving (vLLM/Triton) |
+| **Cloud Computing** | `cloud_computing.md` | AWS/GCP, VPC networking, Terraform IaC, IAM security, serverless Lambda, Docker/Kubernetes |
+| **Data Structures & Algorithms** | `data_structures_and_algorithms.md` | Complexity analysis, trees, heaps, graphs, dynamic programming, technical interview patterns |
+| **Generative AI** | `generative_ai.md` | Autoregressive LLMs, RAG architecture, LoRA/PEFT fine-tuning, guardrails, AI agent workflows |
+
+### 🔄 Ingestion & Retrieval Pipeline
+
+```
+ Local Markdown Files (*.md)
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │  1. KnowledgeBaseLoader                                      │
+ │     • Parses H1 titles and H2 section hierarchies           │
+ │     • Extracts topic, doc_id, file path, and search tags    │
+ └─────────────────────────────────────────────────────────────┘
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │  2. TextChunker (512 chars max, 50 chars overlap)           │
+ │     • Preserves section headings & topic tags per chunk     │
+ └─────────────────────────────────────────────────────────────┘
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │  3. EmbeddingEngine (all-MiniLM-L6-v2, 384 dimensions)      │
+ │     • Computes dense L2-normalized vector embeddings        │
+ └─────────────────────────────────────────────────────────────┘
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │  4. FAISS VectorStore ('knowledge_base' partition)          │
+ │     • IndexFlatIP exact cosine search with metadata filter   │
+ └─────────────────────────────────────────────────────────────┘
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │  5. RAGAssistant                                            │
+ │     • recommend_career_path() & recommend_progression()     │
+ └─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -31,40 +88,7 @@ SkillForge AI is a portfolio-grade AI/ML application that uses NLP, sentence-tra
 SkillForge AI implements an end-to-end **Retrieval-Augmented Generation (RAG)** pipeline designed for factuality, provenance, and zero hallucinations.
 
 ```
- User Query
-     │
-     ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  1. Query Embedding (all-MiniLM-L6-v2, 384 dimensions)      │
- └─────────────────────────────────────────────────────────────┘
-     │
-     ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  2. FAISS Vector Retrieval (Resume, JD, Knowledge Base)    │
- │     Filtered by cosine similarity threshold & top-k         │
- └─────────────────────────────────────────────────────────────┘
-     │
-     ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  3. Context Formatting & Provenance Metadata Assembly       │
- │     [Document 1: Resume - Section: Experience | Rel: 0.85]  │
- └─────────────────────────────────────────────────────────────┘
-     │
-     ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  4. Prompt Construction with Strict Anti-Hallucination      │
- │     System Directives                                       │
- └─────────────────────────────────────────────────────────────┘
-     │
-     ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  5. Pluggable LLM Backend (Google Gemini / Groq / Mock)     │
- └─────────────────────────────────────────────────────────────┘
-     │
-     ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  6. Grounded Response with Typed SourceCitation Objects     │
- └─────────────────────────────────────────────────────────────┘
+ User Query ──► Query Embedding ──► FAISS Retrieval ──► Context Assembly ──► Grounded Prompt ──► LLM ──► Grounded Response + Citations
 ```
 
 ### 🛡️ Anti-Hallucination Guardrails
@@ -76,27 +100,7 @@ SkillForge AI implements an end-to-end **Retrieval-Augmented Generation (RAG)** 
    - Document & Section Name
    - Content Preview snippet
    - Cosine Relevance Score (0.0 to 1.0)
-4. **Pluggable LLM Provider Contract**: The RAG pipeline relies on an abstract `LLMProvider` interface, allowing hot-swapping between Google Gemini, Groq, Ollama, or deterministic Mock providers without altering retrieval code.
-
----
-
-## 🗄️ Vector Retrieval & Chunking Infrastructure (Milestone 6)
-
-SkillForge AI features a multi-source vector retrieval architecture powered by **FAISS (`faiss-cpu`)** and dense sentence embeddings.
-
-### ✂️ Chunk Size & Overlap Strategy
-
-- **Chunk Size: 512 characters (~80–100 words / 1 paragraph)**
-  - Matches the 256-token receptive field of `all-MiniLM-L6-v2`.
-  - Encapsulates complete semantic units (an achievement bullet point or job requirement clause).
-- **Chunk Overlap: 50 characters (~8–10 words)**
-  - Preserves technical multi-word phrases across boundary splits.
-
-### 📚 Isolated Vector Partitions (Namespaces)
-
-1. **`resume`**: Candidate work experience, education, projects, and skills.
-2. **`job_description`**: Target role requirements, qualifications, and responsibilities.
-3. **`knowledge_base`**: Curated career transition guides, interview strategies, and market trends.
+4. **Pluggable LLM Provider Contract**: The RAG pipeline relies on an abstract `LLMProvider` interface, allowing hot-swapping between Google Gemini, Groq, Ollama, or deterministic Mock providers.
 
 ---
 
@@ -113,36 +117,7 @@ $$\text{Overall Score} = 0.40 \cdot S_{\text{skills}} + 0.25 \cdot S_{\text{req}
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Streamlit Frontend                       │
-│  01_Upload · 02_Analysis · 03_Roadmap · 04_Interview · 05_Assistant
-├─────────────────────────────────────────────────────────────┤
-│                     Service Layer                           │
-│  ResumeService · SkillExtractor · SemanticMatcher           │
-│  RetrievalService · RAGAssistant · RoadmapGenerator         │
-├─────────────────────────────────────────────────────────────┤
-│                    AI / ML Core                             │
-│  EmbeddingEngine (SentenceTransformers all-MiniLM-L6-v2)    │
-│  VectorStore (FAISS IndexFlatIP) · LLMProvider (Gemini/Groq/Mock)
-├─────────────────────────────────────────────────────────────┤
-│                     Data Layer                              │
-│  PDFParser (PyMuPDF) · Preprocessor · Chunker · Taxonomy   │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- A free [Google Gemini API key](https://aistudio.google.com/apikey) or [Groq API key](https://console.groq.com/keys)
-
-### Installation
 
 ```bash
 # 1. Clone the repository
@@ -160,42 +135,11 @@ pip install -r requirements.txt
 # 4. Download spaCy model
 python -m spacy download en_core_web_sm
 
-# 5. Configure environment variables
-copy .env.example .env       # Windows
-# cp .env.example .env       # macOS/Linux
-# Edit .env and add your API keys
-
-# 6. Index knowledge base documents into FAISS
+# 5. Index knowledge base documents into FAISS
 python scripts/index_knowledge_base.py
 
-# 7. Run the application
+# 6. Run the application
 streamlit run app/streamlit_app.py
-```
-
----
-
-## 📁 Project Structure
-
-```
-skillforge-ai/
-├── config/settings.py           # Pydantic Settings (loads .env)
-├── src/skillforge/
-│   ├── data/                    # PDF parsing, text cleaning, chunking, skill taxonomy
-│   ├── ai/
-│   │   ├── embeddings.py        # SentenceTransformers engine
-│   │   ├── vector_store.py      # FAISS multi-namespace vector database
-│   │   └── llm/                 # Abstract LLMProvider, Gemini, Groq, Mock & Factory
-│   ├── services/
-│   │   ├── resume_service.py    # PDF processing & extraction pipeline
-│   │   ├── skill_extractor.py   # Hybrid taxonomy & spaCy NLP skill extractor
-│   │   ├── semantic_matcher.py  # Multi-factor explainable scoring engine
-│   │   └── rag_assistant.py     # End-to-end grounded RAG pipeline
-│   ├── models/                  # Pydantic models (matching, resume, roadmap, rag)
-│   └── utils/                   # Logging, custom exception hierarchy
-├── knowledge_base/             # Curated career guides (interview, trends, transitions)
-├── app/                        # Streamlit frontend (Upload, Analysis, Assistant)
-├── tests/                      # pytest test suite (175 tests)
-└── scripts/                    # index_knowledge_base.py, evaluate_matching.py
 ```
 
 ---
@@ -203,14 +147,14 @@ skillforge-ai/
 ## 🧪 Running Tests
 
 ```bash
-# Run all tests
+# Run all tests (195 unit and integration tests)
 pytest
 
 # Run with coverage
 pytest --cov=src/skillforge --cov-report=term-missing
 
-# Run RAG pipeline tests
-pytest tests/unit/test_rag_pipeline.py -v
+# Run knowledge base tests
+pytest tests/unit/test_knowledge_base.py -v
 ```
 
 ---
@@ -223,14 +167,5 @@ pytest tests/unit/test_rag_pipeline.py -v
 | NLP & Embeddings | spaCy, SentenceTransformers (`all-MiniLM-L6-v2`) | Skill extraction, dense embeddings & semantic matching |
 | Vector Search | FAISS (`faiss-cpu`) | Partitioned similarity search across Resume, JD & Knowledge Base |
 | LLM | Gemini / Groq / Mock (swappable) | Contextual generation with strict anti-hallucination grounding |
-| Data Models | Pydantic v2 | Type validation & serialization |
-| PDF Parsing | PyMuPDF | Structured resume extraction |
-| Config | pydantic-settings, python-dotenv | Environment management |
-| Logging | Loguru | Structured logging |
-| Testing | pytest | Comprehensive unit & integration testing (175 tests) |
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+| Data Layer | PyMuPDF, `KnowledgeBaseLoader` | Multi-source parsing and structured markdown ingestion |
+| Testing | pytest | Comprehensive test suite (195 tests) |
