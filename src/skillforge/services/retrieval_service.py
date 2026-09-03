@@ -8,7 +8,7 @@ Supports 3 primary knowledge partitions:
     1. Resume ('resume') — candidate's history, projects, and skills
     2. Job Description ('job_description') — role requirements and qualifications
     3. Career Knowledge Base ('knowledge_base') — curated career guides, interview strategies,
-       industry trends, and transition paths
+       domain-specific roadmaps (ML, DL, NLP, CV, SQL, Python, MLOps, Cloud, DSA, GenAI)
 
 Design Decisions:
     - Chunking strategy: 512-character chunks with 50-character overlap
@@ -41,6 +41,7 @@ from typing import Any
 from src.skillforge.ai.embeddings import EmbeddingEngine
 from src.skillforge.ai.vector_store import SearchResult, VectorStore
 from src.skillforge.data.chunker import TextChunker
+from src.skillforge.data.knowledge_base_loader import KnowledgeBaseLoader
 from src.skillforge.models.rag import CitationSource, SourceCitation
 from src.skillforge.models.resume import ResumeAnalysis, TextChunk
 from src.skillforge.utils.exceptions import ChunkingError, EmbeddingError, VectorStoreError
@@ -51,8 +52,8 @@ class RetrievalService:
     """
     Multi-source vector indexing and similarity retrieval service.
 
-    Connects TextChunker, EmbeddingEngine, and FAISS VectorStore into
-    a unified retrieval system.
+    Connects TextChunker, EmbeddingEngine, KnowledgeBaseLoader, and FAISS VectorStore
+    into a unified retrieval system.
     """
 
     # Standard default chunking parameters
@@ -64,6 +65,7 @@ class RetrievalService:
         vector_store: VectorStore | None = None,
         embedding_engine: EmbeddingEngine | None = None,
         chunker: TextChunker | None = None,
+        kb_loader: KnowledgeBaseLoader | None = None,
     ) -> None:
         """
         Initialize the retrieval service with dependency injection.
@@ -72,12 +74,14 @@ class RetrievalService:
             vector_store: FAISS VectorStore instance (or created with default dimension 384).
             embedding_engine: SentenceTransformer engine.
             chunker: Document chunker configured with standard chunk size and overlap.
+            kb_loader: KnowledgeBaseLoader instance for parsing markdown documents.
         """
         self.engine = embedding_engine or EmbeddingEngine()
         self.chunker = chunker or TextChunker(
             chunk_size=self.DEFAULT_CHUNK_SIZE,
             chunk_overlap=self.DEFAULT_CHUNK_OVERLAP,
         )
+        self.kb_loader = kb_loader or KnowledgeBaseLoader()
         self.vector_store = vector_store or VectorStore(dimension=self.engine.dimension)
 
     # ── Indexing Methods ───────────────────────────────────────────────
@@ -189,7 +193,8 @@ class RetrievalService:
         directory: str | Path | None = None,
     ) -> int:
         """
-        Read, chunk, embed, and index all markdown files from the knowledge base directory.
+        Read, parse with KnowledgeBaseLoader, chunk, embed, and index all markdown files
+        from the knowledge base directory into the 'knowledge_base' namespace.
 
         Args:
             directory: Path to knowledge_base folder. If None, auto-detects from project root.
@@ -207,29 +212,12 @@ class RetrievalService:
             logger.warning("Knowledge base directory not found", path=str(kb_dir))
             return 0
 
-        all_chunks: list[TextChunk] = []
-        md_files = list(kb_dir.glob("*.md"))
-
-        for md_path in md_files:
-            try:
-                with open(md_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-
-                if not content.strip():
-                    continue
-
-                doc_title = md_path.stem.replace("_", " ").title()
-                chunks = self.chunker.chunk_text(
-                    text=content,
-                    source=CitationSource.KNOWLEDGE_BASE.value,
-                    source_name=doc_title,
-                    section="overview",
-                    metadata={"file_path": str(md_path), "filename": md_path.name},
-                )
-                all_chunks.extend(chunks)
-
-            except Exception as e:
-                logger.error("Failed to read knowledge base document", file=str(md_path), error=str(e))
+        # Load and section-chunk all markdown files using KnowledgeBaseLoader
+        all_chunks = self.kb_loader.chunk_directory(
+            directory_path=kb_dir,
+            chunker=self.chunker,
+            recursive=True,
+        )
 
         if not all_chunks:
             logger.warning("No knowledge base chunks found to index")
@@ -246,8 +234,8 @@ class RetrievalService:
 
         logger.info(
             "Knowledge base indexed in vector store",
-            file_count=len(md_files),
             total_chunks=len(all_chunks),
+            directory=str(kb_dir),
         )
         return len(all_chunks)
 
@@ -367,6 +355,34 @@ class RetrievalService:
             sources=[CitationSource.KNOWLEDGE_BASE],
             top_k=top_k,
             min_score=min_score,
+        )
+
+    def retrieve_career_knowledge(
+        self,
+        query: str,
+        topic: str | None = None,
+        top_k: int = 4,
+        min_score: float = 0.0,
+    ) -> list[SourceCitation]:
+        """
+        Retrieve career knowledge with optional topic-level filtering.
+
+        Args:
+            query: Career inquiry or technology question.
+            topic: Optional topic filter (e.g. 'Machine Learning', 'Python', 'MLOps').
+            top_k: Number of citations.
+            min_score: Score threshold.
+
+        Returns:
+            List of SourceCitation models.
+        """
+        filter_meta = {"topic": topic} if topic else None
+        return self.retrieve(
+            query=query,
+            sources=[CitationSource.KNOWLEDGE_BASE],
+            top_k=top_k,
+            min_score=min_score,
+            filter_metadata=filter_meta,
         )
 
     # ── Status & State ─────────────────────────────────────────────────

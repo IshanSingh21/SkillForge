@@ -229,6 +229,55 @@ CRITICAL GROUNDING RULES:
             top_k=top_k,
         )
 
+    def recommend_career_path(
+        self,
+        career_goal_or_topic: str,
+        candidate_skills: list[str] | None = None,
+        top_k: int = 4,
+    ) -> RAGResponse:
+        """
+        Generate grounded career path recommendations for a target role or topic.
+
+        Args:
+            career_goal_or_topic: Target domain or goal (e.g. 'MLOps', 'Computer Vision').
+            candidate_skills: Optional list of candidate's current skills.
+            top_k: Number of knowledge chunks to retrieve.
+
+        Returns:
+            RAGResponse grounded in career knowledge base documents.
+        """
+        prompt = f"What are the key career roles, prerequisite skills, and typical project experience for {career_goal_or_topic}?"
+        if candidate_skills:
+            prompt += f" The candidate currently has skills in: {', '.join(candidate_skills)}."
+
+        return self.query(
+            question=prompt,
+            sources=[CitationSource.KNOWLEDGE_BASE],
+            top_k=top_k,
+        )
+
+    def recommend_learning_progression(
+        self,
+        target_skill_or_role: str,
+        top_k: int = 4,
+    ) -> RAGResponse:
+        """
+        Retrieve structured learning phases and milestone progression for a technical area.
+
+        Args:
+            target_skill_or_role: Topic (e.g. 'Generative AI', 'Deep Learning', 'SQL').
+            top_k: Number of knowledge chunks to retrieve.
+
+        Returns:
+            RAGResponse containing structured phase-by-phase learning plan.
+        """
+        prompt = f"What is the recommended phase-by-phase learning progression and core concepts to master for {target_skill_or_role}?"
+        return self.query(
+            question=prompt,
+            sources=[CitationSource.KNOWLEDGE_BASE],
+            top_k=top_k,
+        )
+
     # ── Context & Prompt Formatting Helpers ────────────────────────────
 
     def _format_retrieved_context(self, citations: list[SourceCitation]) -> str:
