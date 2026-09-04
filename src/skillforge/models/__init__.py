@@ -2,10 +2,14 @@
 SkillForge AI — Data Models Package.
 
 Re-exports all model classes for convenient importing:
-    from src.skillforge.models import ResumeAnalysis, MatchResult, RAGResponse
+    from src.skillforge.models import ResumeAnalysis, MatchResult, RAGResponse, LearningRoadmap
 """
 
-from src.skillforge.models.matching import MatchResult, SkillGap, SkillMatch
+from src.skillforge.models.matching import (
+    MatchResult,
+    SkillGap,
+    SkillMatch,
+)
 from src.skillforge.models.rag import (
     CitationSource,
     ConversationHistory,
@@ -30,6 +34,11 @@ from src.skillforge.models.roadmap import (
     QuestionDifficulty,
     ResourceType,
     RoadmapMilestone,
+    RoadmapPriority,
+    RoadmapSkillItem,
+    RoadmapStage,
+    RoadmapStageName,
+    SkillGapStatus,
 )
 
 __all__ = [
@@ -45,6 +54,11 @@ __all__ = [
     "SkillGap",
     # Roadmap & Interview
     "LearningRoadmap",
+    "RoadmapStage",
+    "RoadmapSkillItem",
+    "RoadmapPriority",
+    "RoadmapStageName",
+    "SkillGapStatus",
     "RoadmapMilestone",
     "LearningResource",
     "ResourceType",
