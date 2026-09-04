@@ -20,10 +20,39 @@ SkillForge AI is a portfolio-grade AI/ML application that uses NLP, sentence-tra
 | 💬 Grounded RAG Pipeline | 🟢 M7 | Source-grounded conversational assistant with anti-hallucination guardrails |
 | 📌 Source Citations | 🟢 M7 | Every answer cites its source documents and relevance scores |
 | 📖 Curated Knowledge Base | 🟢 M8 | Local structured knowledge base across 10 core technical domains |
-| 🗺️ Learning Roadmap | 🔲 M9 | LLM-generated personalized skill development plan |
-| 🎤 Interview Questions | 🔲 M9 | Role-specific, gap-aware interview preparation |
+| 🗺️ Personalized Roadmap | 🟢 M9 | Explainable, 3-stage learning plan grounded in career knowledge |
+| 🎤 Interview Questions | 🔲 M10 | Role-specific, gap-aware interview preparation |
 
 > 🟢 = Implemented · 🔲 = Planned
+
+---
+
+## 🗺️ Personalized Learning Roadmap (Milestone 9)
+
+SkillForge AI generates an explainable, structured **3-stage learning roadmap** based on skill gaps from Milestone 5 and grounded in the career knowledge base from Milestone 8.
+
+```
+ Candidate Skill Gaps (M5) ──┐
+                             ├─► Prerequisite DAG ──► Multi-Factor Prioritization ──► 3 Sequential Stages ──► Grounded Roadmap
+ Career Knowledge Base (M8) ──┘
+```
+
+### 📐 Multi-Factor Prioritization Formula
+
+$$\text{Priority Score} = \text{Requirement Base} + \text{Gap Status} + \text{Prerequisite Dependency Boost} + \text{Knowledge Grounding Boost}$$
+
+- **Requirement Base**: Required ($+50$) vs Preferred ($+20$)
+- **Gap Status**: Missing ($+30$) vs Partial Match ($+15$)
+- **Prerequisite Dependency**: $+15$ boost if another target skill depends on this skill
+- **Knowledge Base Grounding**: $+5$ boost if backed by retrieved domain documents
+
+### 🪜 3 Sequential Learning Stages
+
+1. **Stage 1: Foundations & Critical Prerequisites**: Urgent foundational gaps (e.g. Python, SQL, Math) and prerequisite dependencies needed for subsequent learning.
+2. **Stage 2: Core Role Competencies**: Primary required frameworks, libraries, and tools for the target role whose prerequisites are met.
+3. **Stage 3: Advanced Specialization & Production**: Preferred / nice-to-have tools, MLOps, CI/CD, cloud deployments, and capstone portfolio projects.
+
+> **Zero Redundancy Rule**: Skills already strongly demonstrated in the resume ($\ge 70\%$ match) are classified as mastered and **excluded** from learning stages.
 
 ---
 
@@ -44,48 +73,9 @@ SkillForge AI includes a local, curated knowledge base structured across 10 core
 | **Data Structures & Algorithms** | `data_structures_and_algorithms.md` | Complexity analysis, trees, heaps, graphs, dynamic programming, technical interview patterns |
 | **Generative AI** | `generative_ai.md` | Autoregressive LLMs, RAG architecture, LoRA/PEFT fine-tuning, guardrails, AI agent workflows |
 
-### 🔄 Ingestion & Retrieval Pipeline
-
-```
- Local Markdown Files (*.md)
-              │
-              ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  1. KnowledgeBaseLoader                                      │
- │     • Parses H1 titles and H2 section hierarchies           │
- │     • Extracts topic, doc_id, file path, and search tags    │
- └─────────────────────────────────────────────────────────────┘
-              │
-              ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  2. TextChunker (512 chars max, 50 chars overlap)           │
- │     • Preserves section headings & topic tags per chunk     │
- └─────────────────────────────────────────────────────────────┘
-              │
-              ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  3. EmbeddingEngine (all-MiniLM-L6-v2, 384 dimensions)      │
- │     • Computes dense L2-normalized vector embeddings        │
- └─────────────────────────────────────────────────────────────┘
-              │
-              ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  4. FAISS VectorStore ('knowledge_base' partition)          │
- │     • IndexFlatIP exact cosine search with metadata filter   │
- └─────────────────────────────────────────────────────────────┘
-              │
-              ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  5. RAGAssistant                                            │
- │     • recommend_career_path() & recommend_progression()     │
- └─────────────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## 💬 Grounded RAG Pipeline (Milestone 7)
-
-SkillForge AI implements an end-to-end **Retrieval-Augmented Generation (RAG)** pipeline designed for factuality, provenance, and zero hallucinations.
 
 ```
  User Query ──► Query Embedding ──► FAISS Retrieval ──► Context Assembly ──► Grounded Prompt ──► LLM ──► Grounded Response + Citations
@@ -95,12 +85,8 @@ SkillForge AI implements an end-to-end **Retrieval-Augmented Generation (RAG)** 
 
 1. **Strict Context Grounding**: The LLM is given strict system directives to base answers **exclusively** on the provided retrieved context.
 2. **Explicit Fallback on Missing Data**: If the retrieved documents lack sufficient facts, the assistant explicitly states: *"Based on the provided documents, I do not have enough information to answer this question."*
-3. **Traceable Citations**: Every response returns a structured `list[SourceCitation]` containing:
-   - Source Type (`resume`, `job_description`, `knowledge_base`)
-   - Document & Section Name
-   - Content Preview snippet
-   - Cosine Relevance Score (0.0 to 1.0)
-4. **Pluggable LLM Provider Contract**: The RAG pipeline relies on an abstract `LLMProvider` interface, allowing hot-swapping between Google Gemini, Groq, Ollama, or deterministic Mock providers.
+3. **Traceable Citations**: Every response returns a structured `list[SourceCitation]` containing source document, section, and relevance score.
+4. **Pluggable LLM Provider Contract**: Decoupled abstract `LLMProvider` interface (Gemini, Groq, Mock, Ollama).
 
 ---
 
@@ -147,14 +133,14 @@ streamlit run app/streamlit_app.py
 ## 🧪 Running Tests
 
 ```bash
-# Run all tests (195 unit and integration tests)
+# Run all tests (203 unit and integration tests)
 pytest
 
 # Run with coverage
 pytest --cov=src/skillforge --cov-report=term-missing
 
-# Run knowledge base tests
-pytest tests/unit/test_knowledge_base.py -v
+# Run roadmap generator tests
+pytest tests/unit/test_roadmap_generator.py -v
 ```
 
 ---
@@ -163,9 +149,9 @@ pytest tests/unit/test_knowledge_base.py -v
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Frontend | Streamlit | Interactive web UI & analytics dashboard |
+| Frontend | Streamlit | Interactive web UI, roadmap stages & analytics dashboard |
 | NLP & Embeddings | spaCy, SentenceTransformers (`all-MiniLM-L6-v2`) | Skill extraction, dense embeddings & semantic matching |
 | Vector Search | FAISS (`faiss-cpu`) | Partitioned similarity search across Resume, JD & Knowledge Base |
 | LLM | Gemini / Groq / Mock (swappable) | Contextual generation with strict anti-hallucination grounding |
 | Data Layer | PyMuPDF, `KnowledgeBaseLoader` | Multi-source parsing and structured markdown ingestion |
-| Testing | pytest | Comprehensive test suite (195 tests) |
+| Testing | pytest | Comprehensive test suite (203 tests) |
