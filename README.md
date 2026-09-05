@@ -21,9 +21,24 @@ SkillForge AI is a portfolio-grade AI/ML application that uses NLP, sentence-tra
 | 📌 Source Citations | 🟢 M7 | Every answer cites its source documents and relevance scores |
 | 📖 Curated Knowledge Base | 🟢 M8 | Local structured knowledge base across 10 core technical domains |
 | 🗺️ Personalized Roadmap | 🟢 M9 | Explainable, 3-stage learning plan grounded in career knowledge |
-| 🎤 Interview Questions | 🔲 M10 | Role-specific, gap-aware interview preparation |
+| 🎤 Interview Preparation | 🟢 M10 | Personalized technical, conceptual, project, and behavioral questions |
 
-> 🟢 = Implemented · 🔲 = Planned
+> 🟢 = Implemented & Verified (211 Automated Tests)
+
+---
+
+## 🎤 Personalized Interview Preparation (Milestone 10)
+
+SkillForge AI generates role-tailored, gap-aware interview preparation question sets dynamically calibrated to the candidate's seniority and resume background.
+
+### 🗂️ 4 Balanced Question Categories
+
+| Category | Purpose | Grounding Source |
+|---|---|---|
+| 💻 **Technical** | Probes hands-on API usage, framework mechanics, and identified **missing skill gaps**. | Grounded in FAISS Career Knowledge Base with citations |
+| 🧠 **Conceptual** | Tests theoretical foundations, algorithmic trade-offs, and computational complexity. | Grounded in domain theory guides with citations |
+| 🛠️ **Project-Based** | Deep-dives into actual projects, metrics, and architecture parsed from candidate resume. | Extracted directly from `ResumeAnalysis` sections |
+| 🤝 **Behavioral** | Evaluates incident response, technical conflict resolution, and leadership via STAR method. | Calibrated to candidate experience level |
 
 ---
 
@@ -51,8 +66,6 @@ $$\text{Priority Score} = \text{Requirement Base} + \text{Gap Status} + \text{Pr
 1. **Stage 1: Foundations & Critical Prerequisites**: Urgent foundational gaps (e.g. Python, SQL, Math) and prerequisite dependencies needed for subsequent learning.
 2. **Stage 2: Core Role Competencies**: Primary required frameworks, libraries, and tools for the target role whose prerequisites are met.
 3. **Stage 3: Advanced Specialization & Production**: Preferred / nice-to-have tools, MLOps, CI/CD, cloud deployments, and capstone portfolio projects.
-
-> **Zero Redundancy Rule**: Skills already strongly demonstrated in the resume ($\ge 70\%$ match) are classified as mastered and **excluded** from learning stages.
 
 ---
 
@@ -133,14 +146,14 @@ streamlit run app/streamlit_app.py
 ## 🧪 Running Tests
 
 ```bash
-# Run all tests (203 unit and integration tests)
+# Run all tests (211 unit and integration tests)
 pytest
 
 # Run with coverage
 pytest --cov=src/skillforge --cov-report=term-missing
 
-# Run roadmap generator tests
-pytest tests/unit/test_roadmap_generator.py -v
+# Run interview generator tests
+pytest tests/unit/test_interview_generator.py -v
 ```
 
 ---
@@ -149,9 +162,9 @@ pytest tests/unit/test_roadmap_generator.py -v
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Frontend | Streamlit | Interactive web UI, roadmap stages & analytics dashboard |
+| Frontend | Streamlit | Interactive web UI, roadmap stages, interview prep & analytics dashboard |
 | NLP & Embeddings | spaCy, SentenceTransformers (`all-MiniLM-L6-v2`) | Skill extraction, dense embeddings & semantic matching |
 | Vector Search | FAISS (`faiss-cpu`) | Partitioned similarity search across Resume, JD & Knowledge Base |
 | LLM | Gemini / Groq / Mock (swappable) | Contextual generation with strict anti-hallucination grounding |
 | Data Layer | PyMuPDF, `KnowledgeBaseLoader` | Multi-source parsing and structured markdown ingestion |
-| Testing | pytest | Comprehensive test suite (203 tests) |
+| Testing | pytest | Comprehensive test suite (211 tests) |
