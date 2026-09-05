@@ -181,52 +181,73 @@ class QuestionCategory(str, Enum):
     """Category of interview question."""
 
     TECHNICAL = "technical"
+    CONCEPTUAL = "conceptual"
+    PROJECT_BASED = "project_based"
     BEHAVIORAL = "behavioral"
     SYSTEM_DESIGN = "system_design"
-    PROBLEM_SOLVING = "problem_solving"
     DOMAIN_KNOWLEDGE = "domain_knowledge"
-    CULTURE_FIT = "culture_fit"
 
 
 class InterviewQuestion(BaseModel):
-    """A single generated interview question with guidance."""
+    """A single personalized interview question with evaluation criteria and RAG grounding."""
 
-    question: str = Field(..., description="The interview question")
+    question: str = Field(..., description="The personalized interview question")
     category: QuestionCategory = Field(
         default=QuestionCategory.TECHNICAL,
-        description="Question category",
+        description="Question category (technical, conceptual, project_based, behavioral)",
     )
     difficulty: QuestionDifficulty = Field(
         default=QuestionDifficulty.MEDIUM,
-        description="Difficulty level",
+        description="Difficulty level (easy, medium, hard)",
     )
     related_skill: str = Field(
         default="",
-        description="The skill this question targets",
+        description="The specific skill or project experience this question probes",
     )
-    guidance: str = Field(
+    why_this_question: str = Field(
         default="",
-        description="Tips for answering this question well",
+        description="Contextual rationale explaining why this was asked based on resume/job/gaps",
+    )
+    evaluation_points: list[str] = Field(
+        default_factory=list,
+        description="Key criteria interviewers evaluate in candidate answers",
     )
     sample_answer_points: list[str] = Field(
         default_factory=list,
-        description="Key points a strong answer should cover",
+        description="Key points a strong candidate answer should cover",
+    )
+    guidance: str = Field(
+        default="",
+        description="Coaching tips and answering framework for the candidate",
+    )
+    supporting_citations: list[SourceCitation] = Field(
+        default_factory=list,
+        description="Supporting knowledge base citations grounding technical/conceptual questions",
+    )
+    has_supporting_knowledge: bool = Field(
+        default=False,
+        description="Whether this question is grounded in retrieved knowledge base docs",
     )
 
 
 class InterviewQuestionSet(BaseModel):
-    """A set of interview questions generated for a target role."""
+    """A comprehensive set of personalized interview questions for a candidate and target role."""
 
-    target_role: str = Field(..., description="The target job role")
+    target_role: str = Field(..., description="Target job title or role")
+    difficulty_level: str = Field(default="Intermediate", description="Calibrated difficulty assessment")
+    summary: str = Field(default="", description="Overview of the interview preparation strategy")
     questions: list[InterviewQuestion] = Field(
         default_factory=list,
-        description="Generated interview questions",
+        description="Generated personalized interview questions",
     )
+    total_questions: int = Field(default=0, ge=0, description="Total number of questions")
     focus_areas: list[str] = Field(
         default_factory=list,
-        description="Key areas the questions cover",
+        description="Key technical and behavioral focus areas",
     )
     preparation_tips: list[str] = Field(
         default_factory=list,
-        description="General interview preparation advice",
+        description="Actionable interview preparation advice",
     )
+    generated_with_llm: bool = Field(default=False, description="Whether LLM was used for generation")
+    model_used: str = Field(default="deterministic-rule-engine", description="Model/engine identifier")
